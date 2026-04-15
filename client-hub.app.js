@@ -8,6 +8,7 @@
   let hubRole = null;
   let detailCache = null;
   let authConfigured = { googleOAuth: false };
+  let clientsLoading = false;
 
   function esc(s) {
     if (s == null) return '';
@@ -111,6 +112,29 @@
     renderHeaderActions();
   }
 
+  function setClientsLoading(isLoading, message) {
+    clientsLoading = !!isLoading;
+    const tbody = document.getElementById('clientsTbody');
+    const empty = document.getElementById('listEmpty');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const loadingMessage = message || 'Loading clients from backend...';
+
+    if (refreshBtn) {
+      refreshBtn.disabled = clientsLoading;
+      refreshBtn.textContent = clientsLoading ? 'Loading...' : 'Refresh';
+    }
+
+    if (!tbody || !empty) return;
+    if (clientsLoading) {
+      tbody.innerHTML =
+        '<tr><td colspan="6"><div class="ch-loading-row"><span class="ch-spinner" aria-hidden="true"></span>' +
+        esc(loadingMessage) +
+        '</div></td></tr>';
+      empty.hidden = true;
+      return;
+    }
+  }
+
   function renderHeaderActions() {
     const el = document.getElementById('headerActions');
     const t = getToken();
@@ -153,6 +177,7 @@
   }
 
   function renderList() {
+    if (clientsLoading) return;
     const tbody = document.getElementById('clientsTbody');
     const empty = document.getElementById('listEmpty');
     const rows = filteredClients();
@@ -213,13 +238,18 @@
   }
 
   async function loadClients() {
-    const data = await api('/clients');
-    clients = data.clients || [];
-    hubRole = data.role || hubRole;
-    const rb = document.getElementById('roleBadge');
-    if (rb) rb.textContent = hubRole ? 'Role: ' + hubRole : '';
-    renderList();
-    if (hubRole === 'editor') loadPending().catch(() => {});
+    setClientsLoading(true, 'Loading clients from backend...');
+    try {
+      const data = await api('/clients');
+      clients = data.clients || [];
+      hubRole = data.role || hubRole;
+      const rb = document.getElementById('roleBadge');
+      if (rb) rb.textContent = hubRole ? 'Role: ' + hubRole : '';
+      renderList();
+      if (hubRole === 'editor') loadPending().catch(() => {});
+    } finally {
+      setClientsLoading(false);
+    }
   }
 
   async function loadPending() {
@@ -681,15 +711,26 @@
     await initAuthStatus();
 
     document.getElementById('saveHubToken').onclick = () => {
+      const submitBtn = document.getElementById('saveHubToken');
+      const originalText = submitBtn ? submitBtn.textContent : '';
       setToken(document.getElementById('hubTokenInput').value.trim());
       if (!getToken()) {
         toast('Enter a token.', 'err');
         return;
       }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Checking token...';
+      }
       showMain();
       loadClients().catch((e) => {
         toast(e.message, 'err');
         showLogin();
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText || 'Continue with token';
+        }
       });
       route();
     };
