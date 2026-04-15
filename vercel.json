@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/client-hub/:path*",
-      "destination": "https://ton-backend.onrender.com/api/client-hub/:path*"
+      "destination": "https://clickupbackend-priy.onrender.com/api/client-hub/:path*"
     },
     {
       "source": "/(.*)",
