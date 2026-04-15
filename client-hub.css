@@ -287,6 +287,27 @@ body {
 
 .ch-empty { padding: 2rem; text-align: center; }
 
+.ch-loading-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ch-muted);
+  font-weight: 600;
+}
+
+.ch-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--ch-border);
+  border-top-color: var(--ch-accent);
+  border-radius: 50%;
+  animation: ch-spin 0.8s linear infinite;
+}
+
+@keyframes ch-spin {
+  to { transform: rotate(360deg); }
+}
+
 .ch-detail-view {
   background: var(--ch-surface);
   border: 1px solid var(--ch-border);
