@@ -20,10 +20,14 @@
 
 body {
   font-family: var(--ch-font);
-  background: var(--ch-bg);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(79, 70, 229, 0.08), transparent 60%),
+    radial-gradient(1000px 550px at 90% 0%, rgba(5, 150, 105, 0.06), transparent 60%),
+    var(--ch-bg);
   color: var(--ch-text);
   min-height: 100vh;
   line-height: 1.5;
+  animation: ch-bg-fade 420ms ease-out;
 }
 
 .ch-header {
@@ -36,6 +40,7 @@ body {
   border-bottom: 1px solid var(--ch-border);
   background: var(--ch-surface);
   box-shadow: var(--ch-shadow);
+  backdrop-filter: blur(6px);
 }
 
 .ch-brand h1 {
@@ -63,6 +68,7 @@ body {
   padding: 1.25rem clamp(1rem, 4vw, 2.5rem) 3rem;
   max-width: 1280px;
   margin: 0 auto;
+  animation: ch-rise 280ms ease-out;
 }
 
 .ch-panel {
@@ -73,6 +79,7 @@ body {
   box-shadow: var(--ch-shadow);
   max-width: 520px;
   margin: 2rem auto;
+  animation: ch-rise 300ms ease-out;
 }
 
 .ch-login h2 { font-family: var(--ch-display); font-size: 1.25rem; margin-bottom: 0.5rem; }
@@ -132,14 +139,16 @@ body {
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.18s, transform 0.14s, box-shadow 0.18s;
 }
 
+.ch-btn:hover { transform: translateY(-1px); }
 .ch-btn:active { transform: scale(0.98); }
 
 .ch-btn-primary {
   background: var(--ch-accent);
   color: #fff;
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.22);
 }
 .ch-btn-primary:hover { filter: brightness(1.05); }
 
@@ -261,10 +270,13 @@ body {
 
 .ch-table tbody tr {
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.16s, transform 0.16s;
 }
 
-.ch-table tbody tr:hover { background: var(--ch-accent-soft); }
+.ch-table tbody tr:hover {
+  background: var(--ch-accent-soft);
+  transform: translateX(1px);
+}
 
 .ch-table tbody tr:last-child td { border-bottom: none; }
 
@@ -304,8 +316,35 @@ body {
   animation: ch-spin 0.8s linear infinite;
 }
 
+.ch-loading-row::after {
+  content: '';
+  display: block;
+  width: 110px;
+  height: 10px;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.18), transparent);
+  animation: ch-shimmer 1.3s ease-in-out infinite;
+}
+
 @keyframes ch-spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes ch-shimmer {
+  0% { transform: translateX(-10px); opacity: 0.4; }
+  50% { transform: translateX(8px); opacity: 0.9; }
+  100% { transform: translateX(-10px); opacity: 0.4; }
+}
+
+@keyframes ch-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ch-bg-fade {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
 }
 
 .ch-detail-view {
@@ -528,3 +567,10 @@ body {
 }
 .ch-onb-list strong { font-size: 0.9rem; }
 details summary { user-select: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
