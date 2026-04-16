@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./client-hub.css" />
+  <!-- Root-absolute paths: required so assets load when the page URL is /client-hub (no trailing slash). -->
+  <link rel="stylesheet" href="/client-hub/client-hub.css" />
 </head>
 <body>
   <div id="app-root">
@@ -34,6 +35,10 @@
         </div>
       </div>
       <p id="loginModeHint" class="ch-muted" hidden>Token login is disabled in production. Use your company Google account.</p>
+      <p id="googleOAuthMissing" class="ch-muted" hidden>
+        Google sign-in is not available: the server must set <code>CLIENT_HUB_GOOGLE_CLIENT_ID</code>, <code>CLIENT_HUB_GOOGLE_CLIENT_SECRET</code>, and <code>API_PUBLIC_ORIGIN</code> (or <code>CLIENT_HUB_GOOGLE_REDIRECT_URI</code>) on Render.
+      </p>
+      <p id="googleOAuthStatusErr" class="ch-muted" hidden></p>
       <div id="googleOAuthWrap" class="ch-oauth-wrap" hidden>
         <hr class="ch-divider" />
         <a id="googleOAuthLink" class="ch-btn ch-btn-google" href="#">Sign in with Google</a>
@@ -91,6 +96,6 @@
       </div>
     </main>
   </div>
-  <script src="./client-hub.app.js" defer></script>
+  <script src="/client-hub/client-hub.app.js" defer></script>
 </body>
 </html>
