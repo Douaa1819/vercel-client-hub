@@ -757,6 +757,11 @@
     try {
       const s = await fetch(API + '/auth/status').then((r) => r.json());
       authConfigured = s;
+      const tokenWrap = document.getElementById('tokenLoginWrap');
+      const loginModeHint = document.getElementById('loginModeHint');
+      const tokenEnabled = s.tokenLoginEnabled !== false;
+      if (tokenWrap) tokenWrap.hidden = !tokenEnabled;
+      if (loginModeHint) loginModeHint.hidden = tokenEnabled;
       const googleWrap = document.getElementById('googleOAuthWrap');
       const googleLink = document.getElementById('googleOAuthLink');
       if (googleWrap && googleLink && s.googleOAuthConfigured) {
@@ -784,6 +789,10 @@
     await initAuthStatus();
 
     document.getElementById('saveHubToken').onclick = () => {
+      if (authConfigured && authConfigured.tokenLoginEnabled === false) {
+        toast('Token login is disabled. Use Google sign-in.', 'err');
+        return;
+      }
       const submitBtn = document.getElementById('saveHubToken');
       const originalText = submitBtn ? submitBtn.textContent : '';
       setToken((document.getElementById('hubTokenInput').value || '').trim());
