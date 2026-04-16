@@ -23,14 +23,17 @@
 
     <section id="loginSection" class="ch-panel ch-login" hidden>
       <h2>Sign in</h2>
-      <p class="ch-muted">Paste the value of <code>CENTRALIZED_HUB_EDITOR_TOKEN</code> or <code>CENTRALIZED_HUB_VIEWER_TOKEN</code> from the server <code>.env</code> (same string, no label).</p>
-      <div class="ch-field">
-        <label for="hubTokenInput">Hub token (viewer / editor)</label>
-        <input id="hubTokenInput" type="password" autocomplete="off" placeholder="Paste token from .env" />
+      <div id="tokenLoginWrap">
+        <p class="ch-muted">Paste your Hub access token (provided by admin). Don’t share the link or the token.</p>
+        <div class="ch-field">
+          <label for="hubTokenInput">Hub token (viewer / editor)</label>
+          <input id="hubTokenInput" type="password" autocomplete="off" placeholder="Paste token" />
+        </div>
+        <div class="ch-row">
+          <button type="button" class="ch-btn ch-btn-primary" id="saveHubToken">Continue with token</button>
+        </div>
       </div>
-      <div class="ch-row">
-        <button type="button" class="ch-btn ch-btn-primary" id="saveHubToken">Continue with token</button>
-      </div>
+      <p id="loginModeHint" class="ch-muted" hidden>Token login is disabled in production. Use your company Google account.</p>
       <div id="googleOAuthWrap" class="ch-oauth-wrap" hidden>
         <hr class="ch-divider" />
         <a id="googleOAuthLink" class="ch-btn ch-btn-google" href="#">Sign in with Google</a>
