@@ -444,7 +444,6 @@
     });
   }
 
-  /** Human-readable onboarding steps; raw JSON in a collapsible details block for debug. */
   function renderOnboardingTab(onboarding) {
     const ob = onboarding || {};
     const steps = ob.steps || {};
@@ -791,22 +790,42 @@
   }
 
   async function initAuthStatus() {
+    const googleWrap = document.getElementById('googleOAuthWrap');
+    const googleLink = document.getElementById('googleOAuthLink');
+    const missingEl = document.getElementById('googleOAuthMissing');
+    const statusErrEl = document.getElementById('googleOAuthStatusErr');
+    if (missingEl) missingEl.hidden = true;
+    if (statusErrEl) {
+      statusErrEl.hidden = true;
+      statusErrEl.textContent = '';
+    }
     try {
-      const s = await fetch(API + '/auth/status').then((r) => r.json());
+      const res = await fetch(API + '/auth/status');
+      const s = await res.json().catch(() => ({}));
       authConfigured = s;
       const tokenWrap = document.getElementById('tokenLoginWrap');
       const loginModeHint = document.getElementById('loginModeHint');
       const tokenEnabled = s.tokenLoginEnabled !== false;
       if (tokenWrap) tokenWrap.hidden = !tokenEnabled;
       if (loginModeHint) loginModeHint.hidden = tokenEnabled;
-      const googleWrap = document.getElementById('googleOAuthWrap');
-      const googleLink = document.getElementById('googleOAuthLink');
-      if (googleWrap && googleLink && s.googleOAuthConfigured) {
-        googleWrap.hidden = false;
-        googleLink.href = API + '/auth/google/start';
+      if (googleWrap && googleLink) {
+        if (s.googleOAuthConfigured) {
+          googleWrap.hidden = false;
+          googleLink.href = API + '/auth/google/start';
+          if (missingEl) missingEl.hidden = true;
+        } else {
+          googleWrap.hidden = true;
+          if (missingEl) missingEl.hidden = false;
+        }
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      if (statusErrEl) {
+        statusErrEl.hidden = false;
+        statusErrEl.textContent =
+          'Cannot reach the hub API (' +
+          API +
+          '/auth/status). Check Vercel rewrites to your Render backend, or open the hub from the backend URL.';
+      }
     }
   }
 
