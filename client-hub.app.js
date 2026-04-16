@@ -444,6 +444,7 @@
     });
   }
 
+  /** Human-readable onboarding steps; raw JSON in a collapsible details block for debug. */
   function renderOnboardingTab(onboarding) {
     const ob = onboarding || {};
     const steps = ob.steps || {};
