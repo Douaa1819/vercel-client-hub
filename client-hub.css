@@ -235,6 +235,20 @@ body {
   vertical-align: top;
 }
 
+.ch-perm-table td {
+  vertical-align: middle;
+}
+
+.ch-perm-role {
+  min-width: 110px;
+}
+
+.ch-perm-allowed {
+  min-width: 320px;
+  width: 100%;
+  max-width: 560px;
+}
+
 .ch-table-wrap {
   overflow: auto;
   border: 1px solid var(--ch-border);
