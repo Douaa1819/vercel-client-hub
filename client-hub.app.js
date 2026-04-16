@@ -832,7 +832,12 @@
   function captureQuery() {
     const u = new URL(window.location.href);
     const oauthErr = u.searchParams.get('oauth_error');
-    const oauthToken = (u.searchParams.get('oauth_token') || '').trim();
+    // Backend may redirect with ?oauth_token= (preferred) or legacy ?token= after Google OAuth.
+    const oauthToken = (
+      u.searchParams.get('oauth_token') ||
+      u.searchParams.get('token') ||
+      ''
+    ).trim();
     if (oauthErr) {
       const msg = oauthErr === 'not_invited_contact_admin' ? 'Your email is not invited yet. Ask an admin to grant access.' : 'OAuth: ' + oauthErr;
       toast(msg, 'err');
@@ -844,6 +849,7 @@
     if (oauthErr || oauthToken) {
       u.searchParams.delete('oauth_error');
       u.searchParams.delete('oauth_token');
+      u.searchParams.delete('token');
       window.history.replaceState({}, document.title, u.pathname + (u.search ? u.search : '') + (u.hash ? u.hash : ''));
     }
   }
