@@ -343,6 +343,12 @@
       wrap.innerHTML =
         '<h3>User permissions</h3>' +
         '<p class="ch-muted" style="margin-bottom:0.75rem">Manage who can view/edit and which sub-accounts they can import into.</p>' +
+        '<div class="ch-perm-invite">' +
+        '<input id="permInviteEmail" class="ch-search" type="email" placeholder="invite.email@gmail.com" autocomplete="off" />' +
+        '<select id="permInviteRole" class="ch-select"><option value="viewer">viewer</option><option value="editor">editor</option></select>' +
+        '<input id="permInviteAllowed" class="ch-search ch-perm-allowed" placeholder="allowed location IDs (optional): locA, locB" />' +
+        '<button type="button" class="ch-btn ch-btn-primary" id="permInviteSave">Invite / Update</button>' +
+        '</div>' +
         '<table class="ch-pending-table ch-perm-table"><thead><tr><th>Email</th><th>Role</th><th>Allowed Location IDs (comma-separated)</th><th></th></tr></thead><tbody>' +
         users
           .map((u) => {
@@ -364,6 +370,52 @@
           .join('') +
         '</tbody></table>';
 
+      const savePermissions = async (email, role, allowedLocationIds, buttonEl) => {
+        if (!email) return;
+        const btn = buttonEl || null;
+        const original = btn ? btn.textContent : '';
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Saving...';
+        }
+        try {
+          await api('/users/' + encodeURIComponent(email) + '/permissions', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role, allowedLocationIds }),
+          });
+          toast('Permissions updated for ' + email, 'ok');
+          loadUserPermissions().catch(() => {});
+        } catch (err) {
+          toast(err.message, 'err');
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = original || 'Save';
+          }
+        }
+      };
+
+      const inviteBtn = wrap.querySelector('#permInviteSave');
+      if (inviteBtn) {
+        inviteBtn.onclick = async (e) => {
+          e.stopPropagation();
+          const email = String((wrap.querySelector('#permInviteEmail') || {}).value || '')
+            .trim()
+            .toLowerCase();
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            toast('Enter a valid email to invite.', 'err');
+            return;
+          }
+          const role = String((wrap.querySelector('#permInviteRole') || {}).value || 'viewer').trim();
+          const allowedLocationIds = String((wrap.querySelector('#permInviteAllowed') || {}).value || '')
+            .split(',')
+            .map((x) => x.trim())
+            .filter(Boolean);
+          await savePermissions(email, role, allowedLocationIds, inviteBtn);
+        };
+      }
+
       wrap.querySelectorAll('.ch-perm-save').forEach((btn) => {
         btn.onclick = async (e) => {
           e.stopPropagation();
@@ -376,23 +428,7 @@
             .split(',')
             .map((x) => x.trim())
             .filter(Boolean);
-          btn.disabled = true;
-          const original = btn.textContent;
-          btn.textContent = 'Saving...';
-          try {
-            await api('/users/' + encodeURIComponent(email) + '/permissions', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role, allowedLocationIds }),
-            });
-            toast('Permissions updated for ' + email, 'ok');
-            loadUserPermissions().catch(() => {});
-          } catch (err) {
-            toast(err.message, 'err');
-          } finally {
-            btn.disabled = false;
-            btn.textContent = original || 'Save';
-          }
+          await savePermissions(email, role, allowedLocationIds, btn);
         };
       });
     } catch {
@@ -408,6 +444,7 @@
     });
   }
 
+  /** Human-readable onboarding steps; raw JSON in a collapsible details block for debug. */
   function renderOnboardingTab(onboarding) {
     const ob = onboarding || {};
     const steps = ob.steps || {};
@@ -776,9 +813,20 @@
   function captureQuery() {
     const u = new URL(window.location.href);
     const oauthErr = u.searchParams.get('oauth_error');
-    if (oauthErr) toast('OAuth: ' + oauthErr, 'err');
-    // Security: we DO NOT support setting token from URL query.
-    // Anyone who has the link must not be able to view clients.
+    const oauthToken = (u.searchParams.get('oauth_token') || '').trim();
+    if (oauthErr) {
+      const msg = oauthErr === 'not_invited_contact_admin' ? 'Your email is not invited yet. Ask an admin to grant access.' : 'OAuth: ' + oauthErr;
+      toast(msg, 'err');
+    }
+    if (oauthToken) {
+      setToken(oauthToken);
+      toast('Signed in with Google.', 'ok');
+    }
+    if (oauthErr || oauthToken) {
+      u.searchParams.delete('oauth_error');
+      u.searchParams.delete('oauth_token');
+      window.history.replaceState({}, document.title, u.pathname + (u.search ? u.search : '') + (u.hash ? u.hash : ''));
+    }
   }
 
   async function boot() {
