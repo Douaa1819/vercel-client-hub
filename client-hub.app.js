@@ -240,13 +240,22 @@
   async function loadClients() {
     setClientsLoading(true, 'Loading clients from backend...');
     try {
-      const data = await api('/clients');
+      const data = await api('/clients?page=1&pageSize=50');
       clients = data.clients || [];
       hubRole = data.role || hubRole;
       const rb = document.getElementById('roleBadge');
       if (rb) rb.textContent = hubRole ? 'Role: ' + hubRole : '';
       renderList();
-      if (hubRole === 'editor') loadPending().catch(() => {});
+      if (hubRole === 'editor') {
+        loadPending().catch(() => {});
+        loadUserPermissions().catch(() => {});
+      } else {
+        const p = document.getElementById('userPermPanel');
+        if (p) {
+          p.hidden = true;
+          p.innerHTML = '';
+        }
+      }
     } finally {
       setClientsLoading(false);
     }
@@ -321,6 +330,74 @@
       });
     } catch {
       wrap.hidden = true;
+    }
+  }
+
+  async function loadUserPermissions() {
+    const wrap = document.getElementById('userPermPanel');
+    if (!wrap || hubRole !== 'editor') return;
+    try {
+      const data = await api('/users');
+      const users = Array.isArray(data.users) ? data.users : [];
+      wrap.hidden = false;
+      wrap.innerHTML =
+        '<h3>User permissions</h3>' +
+        '<p class="ch-muted" style="margin-bottom:0.75rem">Manage who can view/edit and which sub-accounts they can import into.</p>' +
+        '<table class="ch-pending-table ch-perm-table"><thead><tr><th>Email</th><th>Role</th><th>Allowed Location IDs (comma-separated)</th><th></th></tr></thead><tbody>' +
+        users
+          .map((u) => {
+            const email = (u.email || '').toString().trim().toLowerCase();
+            const role = (u.role || 'viewer').toString();
+            const allowed = Array.isArray(u.allowedLocationIds) ? u.allowedLocationIds.join(', ') : '';
+            return (
+              '<tr>' +
+              '<td><strong>' + esc(email || 'unknown') + '</strong><div class="ch-cell-sub">' + esc(u.name || '') + '</div></td>' +
+              '<td><select class="ch-select ch-perm-role" data-email="' + esc(email) + '">' +
+              '<option value="viewer"' + (role === 'viewer' ? ' selected' : '') + '>viewer</option>' +
+              '<option value="editor"' + (role === 'editor' ? ' selected' : '') + '>editor</option>' +
+              '</select></td>' +
+              '<td><input class="ch-search ch-perm-allowed" data-email="' + esc(email) + '" value="' + esc(allowed) + '" placeholder="locA, locB, locC" /></td>' +
+              '<td><button type="button" class="ch-btn ch-btn-primary ch-perm-save" data-email="' + esc(email) + '">Save</button></td>' +
+              '</tr>'
+            );
+          })
+          .join('') +
+        '</tbody></table>';
+
+      wrap.querySelectorAll('.ch-perm-save').forEach((btn) => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const email = (btn.getAttribute('data-email') || '').trim().toLowerCase();
+          if (!email) return;
+          const roleEl = wrap.querySelector('.ch-perm-role[data-email="' + CSS.escape(email) + '"]');
+          const allowedEl = wrap.querySelector('.ch-perm-allowed[data-email="' + CSS.escape(email) + '"]');
+          const role = roleEl ? roleEl.value : 'viewer';
+          const allowedLocationIds = (allowedEl ? allowedEl.value : '')
+            .split(',')
+            .map((x) => x.trim())
+            .filter(Boolean);
+          btn.disabled = true;
+          const original = btn.textContent;
+          btn.textContent = 'Saving...';
+          try {
+            await api('/users/' + encodeURIComponent(email) + '/permissions', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role, allowedLocationIds }),
+            });
+            toast('Permissions updated for ' + email, 'ok');
+            loadUserPermissions().catch(() => {});
+          } catch (err) {
+            toast(err.message, 'err');
+          } finally {
+            btn.disabled = false;
+            btn.textContent = original || 'Save';
+          }
+        };
+      });
+    } catch {
+      wrap.hidden = true;
+      wrap.innerHTML = '';
     }
   }
 
@@ -680,11 +757,11 @@
     try {
       const s = await fetch(API + '/auth/status').then((r) => r.json());
       authConfigured = s;
-      const wrap = document.getElementById('googleOAuthWrap');
-      const link = document.getElementById('googleOAuthLink');
-      if (wrap && link && s.googleOAuthConfigured) {
-        wrap.hidden = false;
-        link.href = API + '/auth/google/start';
+      const googleWrap = document.getElementById('googleOAuthWrap');
+      const googleLink = document.getElementById('googleOAuthLink');
+      if (googleWrap && googleLink && s.googleOAuthConfigured) {
+        googleWrap.hidden = false;
+        googleLink.href = API + '/auth/google/start';
       }
     } catch {
       /* ignore */
@@ -693,27 +770,23 @@
 
   function captureQuery() {
     const u = new URL(window.location.href);
-    const tok = u.searchParams.get('token');
     const oauthErr = u.searchParams.get('oauth_error');
     if (oauthErr) toast('OAuth: ' + oauthErr, 'err');
-    if (tok) {
-      setToken(tok);
-      u.searchParams.delete('token');
-      u.searchParams.delete('oauth_error');
-      window.history.replaceState({}, '', u.pathname + u.search + u.hash);
-    }
+    // Security: we DO NOT support setting token from URL query.
+    // Anyone who has the link must not be able to view clients.
   }
 
   async function boot() {
     captureQuery();
-    document.getElementById('hubTokenInput').value = getToken();
+    const tokenInput = document.getElementById('hubTokenInput');
+    if (tokenInput) tokenInput.value = getToken();
 
     await initAuthStatus();
 
     document.getElementById('saveHubToken').onclick = () => {
       const submitBtn = document.getElementById('saveHubToken');
       const originalText = submitBtn ? submitBtn.textContent : '';
-      setToken(document.getElementById('hubTokenInput').value.trim());
+      setToken((document.getElementById('hubTokenInput').value || '').trim());
       if (!getToken()) {
         toast('Enter a token.', 'err');
         return;
