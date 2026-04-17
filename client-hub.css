@@ -640,11 +640,26 @@ body {
   font-family: var(--ch-font);
   font-weight: 700;
   letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .ch-tagline {
   margin-top: 0.2rem;
   color: var(--ch-muted);
+}
+
+.ch-logo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  color: #2563eb;
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .ch-main {
@@ -666,12 +681,21 @@ body {
 
 .ch-login {
   max-width: 560px;
+  border: none;
+  box-shadow: none;
 }
 
 .ch-login-hero h2 {
   font-size: 1.45rem;
   line-height: 1.2;
   margin-bottom: 0.4rem;
+}
+
+.ch-login-block {
+  margin-top: 0.9rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #f8fafc;
 }
 
 .ch-alert-info,
@@ -727,6 +751,12 @@ body {
   border: 1px solid var(--ch-border);
   color: var(--ch-text);
   background: #ffffff;
+}
+
+.ch-login .ch-field input {
+  border: none;
+  background: #f1f5f9;
+  box-shadow: none;
 }
 
 .ch-field input:focus,
