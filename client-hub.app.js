@@ -10,6 +10,15 @@
   let authConfigured = { googleOAuth: false };
   let clientsLoading = false;
 
+  function debounce(fn, waitMs) {
+    let t = null;
+    return function debounced() {
+      const args = arguments;
+      if (t) clearTimeout(t);
+      t = setTimeout(() => fn.apply(null, args), waitMs);
+    };
+  }
+
   function esc(s) {
     if (s == null) return '';
     const d = document.createElement('div');
@@ -176,11 +185,28 @@
     });
   }
 
+  function updateClientKpis(rows) {
+    const visible = Array.isArray(rows) ? rows : [];
+    const statVisible = document.getElementById('statVisibleClients');
+    const statOnboarding = document.getElementById('statCompletedOnboarding');
+    const statPaid = document.getElementById('statPaidClients');
+    if (statVisible) statVisible.textContent = String(visible.length);
+    if (statOnboarding) {
+      const done = visible.filter((c) => String(c.onboardingStatus || '').toLowerCase() === 'completed').length;
+      statOnboarding.textContent = String(done);
+    }
+    if (statPaid) {
+      const paid = visible.filter((c) => String(c.paymentStatus || '').toLowerCase() === 'paid').length;
+      statPaid.textContent = String(paid);
+    }
+  }
+
   function renderList() {
     if (clientsLoading) return;
     const tbody = document.getElementById('clientsTbody');
     const empty = document.getElementById('listEmpty');
     const rows = filteredClients();
+    updateClientKpis(rows);
     if (!rows.length) {
       tbody.innerHTML = '';
       empty.hidden = false;
@@ -899,10 +925,11 @@
       route();
     };
 
+    const scheduleRender = debounce(renderList, 100);
     ['tableSearch', 'filterPay', 'filterOnb'].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener('input', () => renderList());
-      if (el) el.addEventListener('change', () => renderList());
+      if (el) el.addEventListener('input', scheduleRender);
+      if (el) el.addEventListener('change', scheduleRender);
     });
 
     window.addEventListener('hashchange', () => route());
