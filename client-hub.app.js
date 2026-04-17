@@ -174,8 +174,6 @@
       '<span class="ch-user-chevron">▾</span>' +
       '</button>' +
       '<div class="ch-user-dropdown" id="userMenuDropdown" role="menu">' +
-      '<button type="button" class="ch-user-item" disabled>Profile</button>' +
-      '<button type="button" class="ch-user-item" disabled>Settings</button>' +
       '<button type="button" class="ch-user-item ch-user-item-danger" id="logoutBtn">Sign out</button>' +
       '</div>' +
       '</div>';
@@ -324,13 +322,6 @@
       renderList();
       if (hubRole === 'editor') {
         loadPending().catch(() => {});
-        loadUserPermissions().catch(() => {});
-      } else {
-        const p = document.getElementById('userPermPanel');
-        if (p) {
-          p.hidden = true;
-          p.innerHTML = '';
-        }
       }
     } finally {
       setClientsLoading(false);
@@ -864,9 +855,11 @@
       authConfigured = s;
       const tokenWrap = document.getElementById('tokenLoginWrap');
       const loginModeHint = document.getElementById('loginModeHint');
+      const oauthDivider = document.getElementById('oauthDivider');
       const tokenEnabled = s.tokenLoginEnabled !== false;
       if (tokenWrap) tokenWrap.hidden = !tokenEnabled;
       if (loginModeHint) loginModeHint.hidden = tokenEnabled;
+      if (oauthDivider) oauthDivider.hidden = !tokenEnabled;
       if (googleWrap && googleLink) {
         if (s.googleOAuthConfigured) {
           googleWrap.hidden = false;

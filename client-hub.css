@@ -176,6 +176,10 @@ body {
 
 .ch-oauth-wrap { margin-top: 0.5rem; }
 
+.ch-oauth-wrap .ch-btn-google {
+  margin: 0 auto;
+}
+
 .ch-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -695,7 +699,8 @@ body {
   margin-top: 0.9rem;
   padding: 0.75rem;
   border-radius: 10px;
-  background: #f8fafc;
+  background: #ffffff;
+  border: 1px solid var(--ch-border);
 }
 
 .ch-login-error {
@@ -714,8 +719,9 @@ body {
   align-items: center;
   gap: 0.4rem;
   border-radius: 10px;
-  background: #f1f5f9;
-  padding: 0.2rem 0.25rem 0.2rem 0.55rem;
+  border: 1px solid var(--ch-border);
+  background: #fff;
+  padding: 0.2rem 0.25rem 0.2rem 0.5rem;
 }
 
 .ch-input-wrap input {
@@ -727,7 +733,7 @@ body {
 }
 
 .ch-input-toggle {
-  border: 1px solid #d7e1f3;
+  border: 1px solid #dbe2ec;
   background: #fff;
   color: #334155;
   border-radius: 8px;
@@ -822,7 +828,7 @@ body {
   position: absolute;
   right: 0;
   top: calc(100% + 0.4rem);
-  min-width: 180px;
+  min-width: 120px;
   background: #fff;
   border: 1px solid var(--ch-border);
   border-radius: 10px;
@@ -849,11 +855,6 @@ body {
 
 .ch-user-item:hover:not(:disabled) {
   background: #f1f5f9;
-}
-
-.ch-user-item:disabled {
-  color: #94a3b8;
-  cursor: not-allowed;
 }
 
 .ch-user-item-danger {
@@ -917,7 +918,7 @@ body {
 
 .ch-login .ch-field input {
   border: none;
-  background: #f1f5f9;
+  background: #ffffff;
   box-shadow: none;
 }
 
