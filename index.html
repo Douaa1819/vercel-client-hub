@@ -30,19 +30,7 @@
         <p class="ch-muted">Sign in quickly and manage your team from one place.</p>
       </div>
 
-      <div id="tokenLoginWrap" class="ch-login-block">
-        <p class="ch-muted">Paste your Hub access token (provided by admin). Keep it private.</p>
-        <div class="ch-field">
-          <label for="hubTokenInput">Hub token (viewer / editor)</label>
-          <input id="hubTokenInput" type="password" autocomplete="off" placeholder="Paste token" />
-        </div>
-        <div class="ch-row">
-          <button type="button" class="ch-btn ch-btn-primary" id="saveHubToken">Continue with token</button>
-        </div>
-      </div>
-
-      <p id="loginModeHint" class="ch-muted ch-alert-info" hidden></p>
-      <p id="googleOAuthMissing" class="ch-muted ch-alert-warn" hidden>
+  
         Google sign-in is not available: the server must set <code>CLIENT_HUB_GOOGLE_CLIENT_ID</code>, <code>CLIENT_HUB_GOOGLE_CLIENT_SECRET</code>, and <code>API_PUBLIC_ORIGIN</code> (or <code>CLIENT_HUB_GOOGLE_REDIRECT_URI</code>) on Render.
       </p>
       <p id="googleOAuthStatusErr" class="ch-muted ch-alert-warn" hidden></p>
