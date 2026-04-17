@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Client Hub dashboard for onboarding, media, payment and past-customer automation." />
+  <meta name="theme-color" content="#6d56ff" />
   <title>Client Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
-  <!-- Root-absolute paths: required so assets load when the page URL is /client-hub (no trailing slash). -->
-  <link rel="stylesheet" href="/client-hub/client-hub.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./client-hub.css" />
 </head>
 <body>
+  <div class="ch-bg-blur" aria-hidden="true"></div>
   <div id="app-root">
     <header class="ch-header">
       <div class="ch-brand">
-        <h1>Client Hub</h1>
-        <p class="ch-tagline">Unified clients · Media Hub · Onboarding · GMB · Payments · A2P</p>
+        <h1><span class="ch-logo-icon" aria-hidden="true">◎</span> Client Hub</h1>
+        <p class="ch-tagline">Simple hub for clients, onboarding, payments, and past-customer imports.</p>
       </div>
       <div class="ch-header-actions" id="headerActions"></div>
     </header>
@@ -23,9 +25,13 @@
     <div id="toastHost" class="ch-toast-host" aria-live="polite"></div>
 
     <section id="loginSection" class="ch-panel ch-login" hidden>
-      <h2>Sign in</h2>
-      <div id="tokenLoginWrap">
-        <p class="ch-muted">Paste your Hub access token (provided by admin). Don’t share the link or the token.</p>
+      <div class="ch-login-hero">
+        <h2>Welcome back</h2>
+        <p class="ch-muted">Sign in quickly and manage your team from one place.</p>
+      </div>
+
+      <div id="tokenLoginWrap" class="ch-login-block">
+        <p class="ch-muted">Paste your Hub access token (provided by admin). Keep it private.</p>
         <div class="ch-field">
           <label for="hubTokenInput">Hub token (viewer / editor)</label>
           <input id="hubTokenInput" type="password" autocomplete="off" placeholder="Paste token" />
@@ -34,11 +40,12 @@
           <button type="button" class="ch-btn ch-btn-primary" id="saveHubToken">Continue with token</button>
         </div>
       </div>
-      <p id="loginModeHint" class="ch-muted" hidden>Token login is disabled in production. Use your company Google account.</p>
-      <p id="googleOAuthMissing" class="ch-muted" hidden>
+
+      <p id="loginModeHint" class="ch-muted ch-alert-info" hidden></p>
+      <p id="googleOAuthMissing" class="ch-muted ch-alert-warn" hidden>
         Google sign-in is not available: the server must set <code>CLIENT_HUB_GOOGLE_CLIENT_ID</code>, <code>CLIENT_HUB_GOOGLE_CLIENT_SECRET</code>, and <code>API_PUBLIC_ORIGIN</code> (or <code>CLIENT_HUB_GOOGLE_REDIRECT_URI</code>) on Render.
       </p>
-      <p id="googleOAuthStatusErr" class="ch-muted" hidden></p>
+      <p id="googleOAuthStatusErr" class="ch-muted ch-alert-warn" hidden></p>
       <div id="googleOAuthWrap" class="ch-oauth-wrap" hidden>
         <hr class="ch-divider" />
         <a id="googleOAuthLink" class="ch-btn ch-btn-google" href="#">Sign in with Google</a>
@@ -46,56 +53,74 @@
     </section>
 
     <main id="mainSection" class="ch-main" hidden>
-      <div class="ch-toolbar">
-        <div class="ch-toolbar-left">
-          <button type="button" class="ch-btn ch-btn-ghost" id="backBtn" hidden>← Back to list</button>
-          <input type="search" id="tableSearch" class="ch-search" placeholder="Search name, location ID, status…" autocomplete="off" />
-          <select id="filterPay" class="ch-select" aria-label="Filter by payment">
-            <option value="">All payments</option>
-            <option value="paid">Paid</option>
-            <option value="failed">Failed</option>
-            <option value="unknown">Unknown</option>
-          </select>
-          <select id="filterOnb" class="ch-select" aria-label="Filter by onboarding">
-            <option value="">All onboarding</option>
-            <option value="completed">Completed</option>
-            <option value="in_progress">In progress</option>
-            <option value="unknown">Unknown</option>
-          </select>
-        </div>
-        <div class="ch-toolbar-right">
-          <span id="roleBadge" class="ch-badge"></span>
-          <button type="button" class="ch-btn ch-btn-ghost" id="refreshBtn">Refresh</button>
-        </div>
-      </div>
+      <section class="ch-kpi-grid" id="kpiGrid" aria-label="Client health overview">
+        <article class="ch-kpi-card">
+          <p class="ch-kpi-label">Visible clients</p>
+          <p class="ch-kpi-value" id="statVisibleClients">0</p>
+        </article>
+        <article class="ch-kpi-card">
+          <p class="ch-kpi-label">Completed onboarding</p>
+          <p class="ch-kpi-value" id="statCompletedOnboarding">0</p>
+        </article>
+        <article class="ch-kpi-card">
+          <p class="ch-kpi-label">Paid status</p>
+          <p class="ch-kpi-value" id="statPaidClients">0</p>
+        </article>
+      </section>
 
-      <div id="pendingPanel" class="ch-pending" hidden></div>
-      <div id="userPermPanel" class="ch-pending" hidden></div>
-
-      <div id="listView" class="ch-list-view">
-        <div class="ch-table-wrap">
-          <table class="ch-table" id="clientsTable">
-            <thead>
-              <tr>
-                <th>Client</th>
-                <th>Location ID</th>
-                <th>Onboarding</th>
-                <th>Payment</th>
-                <th>Msg fail %</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="clientsTbody"></tbody>
-          </table>
+      <section class="ch-surface">
+        <div class="ch-toolbar">
+          <div class="ch-toolbar-left">
+            <button type="button" class="ch-btn ch-btn-ghost" id="backBtn" hidden>← Back to list</button>
+            <input type="search" id="tableSearch" class="ch-search" placeholder="Search name, location ID, status..." autocomplete="off" />
+            <select id="filterPay" class="ch-select" aria-label="Filter by payment">
+              <option value="">All payments</option>
+              <option value="paid">Paid</option>
+              <option value="failed">Failed</option>
+              <option value="unknown">Unknown</option>
+            </select>
+            <select id="filterOnb" class="ch-select" aria-label="Filter by onboarding">
+              <option value="">All onboarding</option>
+              <option value="completed">Completed</option>
+              <option value="in_progress">In progress</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+          <div class="ch-toolbar-right">
+            <span id="roleBadge" class="ch-badge"></span>
+            <button type="button" class="ch-btn ch-btn-ghost" id="refreshBtn">Refresh</button>
+          </div>
         </div>
-        <p id="listEmpty" class="ch-muted ch-empty" hidden>No clients match filters.</p>
-      </div>
 
-      <div id="detailView" class="ch-detail-view" hidden>
-        <div id="detailMount"></div>
-      </div>
+        <div id="pendingPanel" class="ch-pending" hidden></div>
+        <div id="userPermPanel" class="ch-pending" hidden></div>
+
+        <div id="listView" class="ch-list-view">
+          <div class="ch-table-wrap">
+            <table class="ch-table" id="clientsTable">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Location ID</th>
+                  <th>Onboarding</th>
+                  <th>Payment</th>
+                  <th>Msg fail %</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="clientsTbody"></tbody>
+            </table>
+          </div>
+          <p id="listEmpty" class="ch-muted ch-empty" hidden>No clients match filters.</p>
+        </div>
+
+        <div id="detailView" class="ch-detail-view" hidden>
+          <div id="detailMount"></div>
+        </div>
+      </section>
     </main>
   </div>
-  <script src="/client-hub/client-hub.app.js" defer></script>
+  <script src="./client-hub.app.js" defer></script>
 </body>
 </html>
+
