@@ -158,11 +158,6 @@ body {
 }
 .ch-btn-secondary:hover { background: rgba(79, 70, 229, 0.18); }
 
-.ch-btn-ghost {
-  background: transparent;
-  color: var(--ch-muted);
-  border: 1px solid var(--ch-border);
-}
 .ch-btn-ghost:hover { background: var(--ch-bg); color: var(--ch-text); }
 
 .ch-btn-google {
