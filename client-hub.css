@@ -158,6 +158,11 @@ body {
 }
 .ch-btn-secondary:hover { background: rgba(79, 70, 229, 0.18); }
 
+.ch-btn-ghost {
+  background: transparent;
+  color: var(--ch-muted);
+  border: 1px solid var(--ch-border);
+}
 .ch-btn-ghost:hover { background: var(--ch-bg); color: var(--ch-text); }
 
 .ch-btn-google {
@@ -691,6 +696,35 @@ body {
   padding: 0.75rem;
   border-radius: 10px;
   background: #f8fafc;
+}
+
+.ch-admin-dropdown {
+  border: 1px solid var(--ch-border);
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.ch-admin-dropdown > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.7rem 0.85rem;
+  list-style: none;
+}
+
+.ch-admin-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ch-admin-dropdown > summary::after {
+  content: '▾';
+  float: right;
+  color: var(--ch-muted);
+}
+
+.ch-admin-dropdown-body {
+  padding: 0.25rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--ch-border);
 }
 
 .ch-alert-info,

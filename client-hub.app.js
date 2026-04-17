@@ -367,29 +367,30 @@
       const users = Array.isArray(data.users) ? data.users : [];
       wrap.hidden = false;
       wrap.innerHTML =
-        '<h3>User permissions</h3>' +
-        '<p class="ch-muted" style="margin-bottom:0.75rem">Editor-only access. Invite teammates as editors and assign allowed sub-accounts.</p>' +
+        '<details class="ch-admin-dropdown" open>' +
+        '<summary>User permissions</summary>' +
+        '<div class="ch-admin-dropdown-body">' +
+        '<p class="ch-muted" style="margin-bottom:0.75rem">Editor-only access. Invited users can import into all sub-accounts.</p>' +
         '<div class="ch-perm-invite">' +
         '<input id="permInviteEmail" class="ch-search" type="email" placeholder="invite.email@gmail.com" autocomplete="off" />' +
-        '<input id="permInviteAllowed" class="ch-search ch-perm-allowed" placeholder="allowed location IDs (optional): locA, locB" />' +
         '<button type="button" class="ch-btn ch-btn-primary" id="permInviteSave">Invite editor</button>' +
         '</div>' +
-        '<table class="ch-pending-table ch-perm-table"><thead><tr><th>Email</th><th>Role</th><th>Allowed Location IDs (comma-separated)</th><th></th></tr></thead><tbody>' +
+        '<table class="ch-pending-table ch-perm-table"><thead><tr><th>Email</th><th>Role</th><th>Scope</th></tr></thead><tbody>' +
         users
           .map((u) => {
             const email = (u.email || '').toString().trim().toLowerCase();
-            const allowed = Array.isArray(u.allowedLocationIds) ? u.allowedLocationIds.join(', ') : '';
             return (
               '<tr>' +
               '<td><strong>' + esc(email || 'unknown') + '</strong><div class="ch-cell-sub">' + esc(u.name || '') + '</div></td>' +
               '<td><span class="ch-pill ch-pill-onb">editor</span></td>' +
-              '<td><input class="ch-search ch-perm-allowed" data-email="' + esc(email) + '" value="' + esc(allowed) + '" placeholder="locA, locB, locC" /></td>' +
-              '<td><button type="button" class="ch-btn ch-btn-primary ch-perm-save" data-email="' + esc(email) + '">Save</button></td>' +
+              '<td><span class="ch-muted">All locations</span></td>' +
               '</tr>'
             );
           })
           .join('') +
-        '</tbody></table>';
+        '</tbody></table>' +
+        '</div>' +
+        '</details>';
 
       const savePermissions = async (email, role, allowedLocationIds, buttonEl) => {
         if (!email) return;
@@ -403,7 +404,7 @@
           await api('/users/' + encodeURIComponent(email) + '/permissions', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role, allowedLocationIds }),
+            body: JSON.stringify({ role }),
           });
           toast('Permissions updated for ' + email, 'ok');
           loadUserPermissions().catch(() => {});
@@ -429,28 +430,10 @@
             return;
           }
           const role = 'editor';
-          const allowedLocationIds = String((wrap.querySelector('#permInviteAllowed') || {}).value || '')
-            .split(',')
-            .map((x) => x.trim())
-            .filter(Boolean);
+          const allowedLocationIds = [];
           await savePermissions(email, role, allowedLocationIds, inviteBtn);
         };
       }
-
-      wrap.querySelectorAll('.ch-perm-save').forEach((btn) => {
-        btn.onclick = async (e) => {
-          e.stopPropagation();
-          const email = (btn.getAttribute('data-email') || '').trim().toLowerCase();
-          if (!email) return;
-          const allowedEl = wrap.querySelector('.ch-perm-allowed[data-email="' + CSS.escape(email) + '"]');
-          const role = 'editor';
-          const allowedLocationIds = (allowedEl ? allowedEl.value : '')
-            .split(',')
-            .map((x) => x.trim())
-            .filter(Boolean);
-          await savePermissions(email, role, allowedLocationIds, btn);
-        };
-      });
     } catch {
       wrap.hidden = true;
       wrap.innerHTML = '';
