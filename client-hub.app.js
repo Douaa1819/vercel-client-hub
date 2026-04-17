@@ -368,26 +368,21 @@
       wrap.hidden = false;
       wrap.innerHTML =
         '<h3>User permissions</h3>' +
-        '<p class="ch-muted" style="margin-bottom:0.75rem">Manage who can view/edit and which sub-accounts they can import into.</p>' +
+        '<p class="ch-muted" style="margin-bottom:0.75rem">Editor-only access. Invite teammates as editors and assign allowed sub-accounts.</p>' +
         '<div class="ch-perm-invite">' +
         '<input id="permInviteEmail" class="ch-search" type="email" placeholder="invite.email@gmail.com" autocomplete="off" />' +
-        '<select id="permInviteRole" class="ch-select"><option value="viewer">viewer</option><option value="editor">editor</option></select>' +
         '<input id="permInviteAllowed" class="ch-search ch-perm-allowed" placeholder="allowed location IDs (optional): locA, locB" />' +
-        '<button type="button" class="ch-btn ch-btn-primary" id="permInviteSave">Invite / Update</button>' +
+        '<button type="button" class="ch-btn ch-btn-primary" id="permInviteSave">Invite editor</button>' +
         '</div>' +
         '<table class="ch-pending-table ch-perm-table"><thead><tr><th>Email</th><th>Role</th><th>Allowed Location IDs (comma-separated)</th><th></th></tr></thead><tbody>' +
         users
           .map((u) => {
             const email = (u.email || '').toString().trim().toLowerCase();
-            const role = (u.role || 'viewer').toString();
             const allowed = Array.isArray(u.allowedLocationIds) ? u.allowedLocationIds.join(', ') : '';
             return (
               '<tr>' +
               '<td><strong>' + esc(email || 'unknown') + '</strong><div class="ch-cell-sub">' + esc(u.name || '') + '</div></td>' +
-              '<td><select class="ch-select ch-perm-role" data-email="' + esc(email) + '">' +
-              '<option value="viewer"' + (role === 'viewer' ? ' selected' : '') + '>viewer</option>' +
-              '<option value="editor"' + (role === 'editor' ? ' selected' : '') + '>editor</option>' +
-              '</select></td>' +
+              '<td><span class="ch-pill ch-pill-onb">editor</span></td>' +
               '<td><input class="ch-search ch-perm-allowed" data-email="' + esc(email) + '" value="' + esc(allowed) + '" placeholder="locA, locB, locC" /></td>' +
               '<td><button type="button" class="ch-btn ch-btn-primary ch-perm-save" data-email="' + esc(email) + '">Save</button></td>' +
               '</tr>'
@@ -433,7 +428,7 @@
             toast('Enter a valid email to invite.', 'err');
             return;
           }
-          const role = String((wrap.querySelector('#permInviteRole') || {}).value || 'viewer').trim();
+          const role = 'editor';
           const allowedLocationIds = String((wrap.querySelector('#permInviteAllowed') || {}).value || '')
             .split(',')
             .map((x) => x.trim())
@@ -447,9 +442,8 @@
           e.stopPropagation();
           const email = (btn.getAttribute('data-email') || '').trim().toLowerCase();
           if (!email) return;
-          const roleEl = wrap.querySelector('.ch-perm-role[data-email="' + CSS.escape(email) + '"]');
           const allowedEl = wrap.querySelector('.ch-perm-allowed[data-email="' + CSS.escape(email) + '"]');
-          const role = roleEl ? roleEl.value : 'viewer';
+          const role = 'editor';
           const allowedLocationIds = (allowedEl ? allowedEl.value : '')
             .split(',')
             .map((x) => x.trim())
