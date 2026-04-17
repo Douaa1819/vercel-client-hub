@@ -29,12 +29,16 @@
         <h2>Welcome back</h2>
         <p class="ch-muted">Sign in quickly and manage your team from one place.</p>
       </div>
+      <p id="loginError" class="ch-login-error" hidden></p>
 
       <div id="tokenLoginWrap" class="ch-login-block">
         <p class="ch-muted">Paste your Hub access token (provided by admin). Keep it private.</p>
         <div class="ch-field">
           <label for="hubTokenInput">Hub token (viewer / editor)</label>
-          <input id="hubTokenInput" type="password" autocomplete="off" placeholder="Paste token" />
+          <div class="ch-input-wrap">
+            <input id="hubTokenInput" type="password" autocomplete="off" placeholder="Paste token" />
+            <button type="button" class="ch-input-toggle" id="hubTokenToggle" aria-label="Show token">Show</button>
+          </div>
         </div>
         <div class="ch-row">
           <button type="button" class="ch-btn ch-btn-primary" id="saveHubToken">Continue with token</button>

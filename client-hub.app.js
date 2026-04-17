@@ -9,6 +9,7 @@
   let detailCache = null;
   let authConfigured = { googleOAuth: false };
   let clientsLoading = false;
+  let headerMenuDocHandler = null;
 
   function debounce(fn, waitMs) {
     let t = null;
@@ -118,7 +119,15 @@
   function showMain() {
     document.getElementById('loginSection').hidden = true;
     document.getElementById('mainSection').hidden = false;
+    setLoginError('');
     renderHeaderActions();
+  }
+
+  function setLoginError(message) {
+    const el = document.getElementById('loginError');
+    if (!el) return;
+    el.textContent = message || '';
+    el.hidden = !message;
   }
 
   function setClientsLoading(isLoading, message) {
@@ -149,15 +158,56 @@
     const t = getToken();
     if (!t) {
       el.innerHTML = '';
+      if (headerMenuDocHandler) {
+        document.removeEventListener('click', headerMenuDocHandler);
+        headerMenuDocHandler = null;
+      }
       return;
     }
+    const role = hubRole || 'editor';
+    const initials = role === 'editor' ? 'ED' : 'US';
     el.innerHTML =
-      '<button type="button" class="ch-btn ch-btn-ghost" id="logoutBtn">Sign out</button>';
+      '<div class="ch-user-menu" id="userMenu">' +
+      '<button type="button" class="ch-user-trigger" id="userMenuTrigger" aria-haspopup="menu" aria-expanded="false">' +
+      '<span class="ch-user-avatar">' + esc(initials) + '</span>' +
+      '<span class="ch-user-meta"><strong>Signed-in user</strong><small>' + esc(role) + '</small></span>' +
+      '<span class="ch-user-chevron">▾</span>' +
+      '</button>' +
+      '<div class="ch-user-dropdown" id="userMenuDropdown" role="menu">' +
+      '<button type="button" class="ch-user-item" disabled>Profile</button>' +
+      '<button type="button" class="ch-user-item" disabled>Settings</button>' +
+      '<button type="button" class="ch-user-item ch-user-item-danger" id="logoutBtn">Sign out</button>' +
+      '</div>' +
+      '</div>';
+
+    const trigger = document.getElementById('userMenuTrigger');
+    const menu = document.getElementById('userMenu');
+    const dropdown = document.getElementById('userMenuDropdown');
+    if (headerMenuDocHandler) {
+      document.removeEventListener('click', headerMenuDocHandler);
+      headerMenuDocHandler = null;
+    }
+    if (trigger && menu && dropdown) {
+      trigger.onclick = (e) => {
+        e.stopPropagation();
+        const open = menu.classList.toggle('open');
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+      headerMenuDocHandler = (e) => {
+        if (!menu.contains(e.target)) {
+          menu.classList.remove('open');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+      };
+      document.addEventListener('click', headerMenuDocHandler);
+    }
+
     document.getElementById('logoutBtn').onclick = () => {
       setToken('');
       hubRole = null;
       clients = [];
       showLogin();
+      setLoginError('');
       document.getElementById('hubTokenInput').value = '';
     };
   }
@@ -741,6 +791,12 @@
         const mergedIssues = []
           .concat(Array.isArray(out.firstConversationIssues) ? out.firstConversationIssues : [])
           .concat(Array.isArray(out.importFailures) ? out.importFailures : []);
+        const hasAuthFailure = (out.importFailures || []).some((f) => /401|403|authorization|unauthorized/i.test(String(f.reason || '')));
+        if (hasAuthFailure) {
+          statusEl.className = 'ch-import-status ch-import-err';
+          statusEl.textContent =
+            'Import blocked by CRM authorization for this sub-account. Ask admin to configure a valid location API token/scope.';
+        }
         if (mergedIssues.length) {
           errorsEl.innerHTML = renderImportIssues(mergedIssues);
         }
@@ -861,11 +917,20 @@
     captureQuery();
     const tokenInput = document.getElementById('hubTokenInput');
     if (tokenInput) tokenInput.value = getToken();
+    const tokenToggle = document.getElementById('hubTokenToggle');
+    if (tokenInput && tokenToggle) {
+      tokenToggle.onclick = () => {
+        const isPwd = tokenInput.type === 'password';
+        tokenInput.type = isPwd ? 'text' : 'password';
+        tokenToggle.textContent = isPwd ? 'Hide' : 'Show';
+      };
+    }
 
     await initAuthStatus();
 
     document.getElementById('saveHubToken').onclick = () => {
       if (authConfigured && authConfigured.tokenLoginEnabled === false) {
+        setLoginError('Token login is disabled. Use Google sign-in.');
         toast('Token login is disabled. Use Google sign-in.', 'err');
         return;
       }
@@ -873,6 +938,7 @@
       const originalText = submitBtn ? submitBtn.textContent : '';
       setToken((document.getElementById('hubTokenInput').value || '').trim());
       if (!getToken()) {
+        setLoginError('Please enter your token.');
         toast('Enter a token.', 'err');
         return;
       }
@@ -882,6 +948,7 @@
       }
       showMain();
       loadClients().catch((e) => {
+        setLoginError(e.message || 'Authentication failed. Please verify your session/token.');
         toast(e.message, 'err');
         showLogin();
       }).finally(() => {
