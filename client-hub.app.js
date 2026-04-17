@@ -10,6 +10,7 @@
   let authConfigured = { googleOAuth: false };
   let clientsLoading = false;
   let headerMenuDocHandler = null;
+  let userPermissionsPanelOpen = false;
 
   function debounce(fn, waitMs) {
     let t = null;
@@ -153,6 +154,17 @@
     }
   }
 
+  function setUserPermissionsPanelVisible(visible) {
+    userPermissionsPanelOpen = !!visible;
+    const wrap = document.getElementById('userPermPanel');
+    if (!wrap) return;
+    if (!visible) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+  }
+
   function renderHeaderActions() {
     const el = document.getElementById('headerActions');
     const t = getToken();
@@ -174,6 +186,7 @@
       '<span class="ch-user-chevron">▾</span>' +
       '</button>' +
       '<div class="ch-user-dropdown" id="userMenuDropdown" role="menu">' +
+      '<button type="button" class="ch-user-item" id="userPermBtn">User permissions</button>' +
       '<button type="button" class="ch-user-item ch-user-item-danger" id="logoutBtn">Sign out</button>' +
       '</div>' +
       '</div>';
@@ -200,10 +213,27 @@
       document.addEventListener('click', headerMenuDocHandler);
     }
 
+    const userPermBtn = document.getElementById('userPermBtn');
+    if (userPermBtn) {
+      userPermBtn.onclick = () => {
+        menu.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        clearHash();
+        route();
+        setUserPermissionsPanelVisible(true);
+        if (hubRole === 'editor') {
+          loadUserPermissions().catch(() => {});
+        }
+        const panel = document.getElementById('userPermPanel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+    }
+
     document.getElementById('logoutBtn').onclick = () => {
       setToken('');
       hubRole = null;
       clients = [];
+      setUserPermissionsPanelVisible(false);
       showLogin();
       setLoginError('');
       document.getElementById('hubTokenInput').value = '';
@@ -322,6 +352,11 @@
       renderList();
       if (hubRole === 'editor') {
         loadPending().catch(() => {});
+        if (userPermissionsPanelOpen) {
+          loadUserPermissions().catch(() => {});
+        } else {
+          setUserPermissionsPanelVisible(false);
+        }
       }
     } finally {
       setClientsLoading(false);
@@ -406,7 +441,7 @@
     try {
       const data = await api('/users');
       const users = Array.isArray(data.users) ? data.users : [];
-      wrap.hidden = false;
+      setUserPermissionsPanelVisible(true);
       wrap.innerHTML =
         '<details class="ch-admin-dropdown" open>' +
         '<summary>User permissions</summary>' +
@@ -476,7 +511,7 @@
         };
       }
     } catch {
-      wrap.hidden = true;
+      setUserPermissionsPanelVisible(false);
       wrap.innerHTML = '';
     }
   }
@@ -567,11 +602,13 @@
     html += '</div>';
 
     html += '<div class="ch-tab-panel active" data-i="0">';
-    html += '<p class="ch-muted">Supabase: ' + (media.supabaseConfigured ? 'connected' : 'not configured') + '</p>';
+    if (media.supabaseConfigured) {
+      html += '<p class="ch-muted">Media Hub sync: connected</p>';
+    }
     if (record) {
       html += '<pre class="ch-json">' + esc(JSON.stringify(record, null, 2)) + '</pre>';
     } else {
-      html += '<p class="ch-muted">No Media Hub row for this location yet.</p>';
+      html += '<p class="ch-muted">Media Hub data is not available for this location yet.</p>';
     }
     html += '<div class="ch-detail-actions">';
     html +=
